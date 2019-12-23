@@ -63,51 +63,75 @@ def auction_rev(n, m):
 
 def main(argv):
 
-	num_trials = 20
+	num_trials = 10
 	# num_trials = int(argv[1])
-	max_bidders = 20
+	max_bidders = 50
 	# max_bidders = int(argv[2])
-	num_items = 2
-	# num_items = int(argv[3])
+	max_items = 6
+	# max_items = int(argv[3])
 
-	csv_file = './auction_results/' + str(max_bidders) + 'bidders' + str(num_items) + 'items' + str(num_trials) + 'trials.csv'
+	# store avg revs over n for each number of items
+	all_avg_revs_over_n = []
 
-	# stores avg rev for n bidder (where n in [2, max_bidders])
-	avg_revs_over_n = []
-	for n in range(2, max_bidders+1):
-		print('number of bidders:', n)
+	for num_items in range(2, max_items+1):
 
-		# run num_trials for each # of bidders so we can 
-		# take the average
-		all_revs = []
-		for i in range(num_trials):
-			rev = auction_rev(n, num_items)
-			all_revs.append(rev)
+		print('\nnumber of items:', num_items)
 
-		avg_rev = mean(all_revs)
-		avg_revs_over_n.append(avg_rev)
+		csv_file = './auction_results/' + str(max_bidders) + 'bidders_' + \
+			str(num_items) + 'items_' + str(num_trials) + 'trials.csv'
 
-	# print and graph avg revs
-	for i in range(len(avg_revs_over_n)):
-		print('num bidders:', str(i+2), '   avg rev:', avg_revs_over_n[i])
+		# stores avg rev for n bidder (where n in [2, max_bidders])
+		avg_revs_over_n = []
+		for n in range(2, max_bidders+1):
+			print('number of bidders:', n)
 
-	
-	num_bidders = []
-	for i in range(2, max_bidders+1):
-		num_bidders.append(i)
+			# run num_trials for each # of bidders so we can 
+			# take the average
+			all_revs = []
+			for i in range(num_trials):
+				rev = auction_rev(n, num_items)
+				all_revs.append(rev)
 
-	df = pd.DataFrame(columns=['num bidders', 'avg rev'])
+			avg_rev = mean(all_revs)
+			avg_revs_over_n.append(avg_rev)
+
+		# print and graph avg revs
+		for i in range(len(avg_revs_over_n)):
+			print('num bidders:', str(i+2), '   avg rev:', avg_revs_over_n[i])
+
+		
+		num_bidders = []
+		for i in range(2, max_bidders+1):
+			num_bidders.append(i)
+
+		df = pd.DataFrame(columns=['num bidders', 'avg rev'])
+		for i in range(len(num_bidders)):
+			n = num_bidders[i]
+			avg_rev = avg_revs_over_n[i]
+			df = df.append({'num bidders': n, 'avg rev': avg_rev}, ignore_index=True)
+
+		df.to_csv(csv_file)
+
+		# add this data to the large array
+		all_avg_revs_over_n.append(avg_revs_over_n)
+
+	# need to plot 2 * sqrt(n)
+	benchmark = []
 	for i in range(len(num_bidders)):
-		n = num_bidders[i]
-		avg_rev = avg_revs_over_n[i]
-		df = df.append({'num bidders': n, 'avg rev': avg_rev}, ignore_index=True)
-
-	df.to_csv(csv_file)
+		benchmark.append(sqrt(num_bidders[i])*2)
 
 	# graph avg revs
+	legend = []
+	for i in range(2, max_items+1):
+		legend.append(str(i) + ' items')
+	legend.append('benchmark')
+
 	fig, ax = plt.subplots()
-	ax.plot(num_bidders,avg_revs_over_n)
-	title = 'avg auction revenue over n bidders'
+	for i in range(len(all_avg_revs_over_n)):
+		ax.plot(num_bidders,all_avg_revs_over_n[i])
+	ax.plot(num_bidders, benchmark)
+	plt.legend(legend, loc='lower right')
+	title = '(paper) avg auction revenue over n bidders'
 	plt.xlabel('num bidders') 
 	plt.ylabel('avg rev') 
 	plt.title(title) 
