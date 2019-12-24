@@ -63,12 +63,22 @@ def auction_rev(n, m):
 
 def main(argv):
 
-	num_trials = 10
+	num_trials = 100
 	# num_trials = int(argv[1])
-	max_bidders = 50
+	max_bidders = 80
 	# max_bidders = int(argv[2])
-	max_items = 6
+	max_items = 7
 	# max_items = int(argv[3])
+	subplot_rows = 2
+	subplot_cols = 3
+
+	num_bidders = []
+	for i in range(2, max_bidders+1):
+		num_bidders.append(i)
+
+	item_numbers = []
+	for i in range(2, max_items+1):
+		item_numbers.append(i)
 
 	# store avg revs over n for each number of items
 	all_avg_revs_over_n = []
@@ -99,11 +109,6 @@ def main(argv):
 		for i in range(len(avg_revs_over_n)):
 			print('num bidders:', str(i+2), '   avg rev:', avg_revs_over_n[i])
 
-		
-		num_bidders = []
-		for i in range(2, max_bidders+1):
-			num_bidders.append(i)
-
 		df = pd.DataFrame(columns=['num bidders', 'avg rev'])
 		for i in range(len(num_bidders)):
 			n = num_bidders[i]
@@ -115,26 +120,48 @@ def main(argv):
 		# add this data to the large array
 		all_avg_revs_over_n.append(avg_revs_over_n)
 
-	# need to plot 2 * sqrt(n)
-	benchmark = []
-	for i in range(len(num_bidders)):
-		benchmark.append(sqrt(num_bidders[i])*2)
-
 	# graph avg revs
-	legend = []
-	for i in range(2, max_items+1):
-		legend.append(str(i) + ' items')
-	legend.append('benchmark')
+	fig, axes = plt.subplots(nrows=subplot_rows,ncols=subplot_cols, sharex=True)
 
-	fig, ax = plt.subplots()
-	for i in range(len(all_avg_revs_over_n)):
-		ax.plot(num_bidders,all_avg_revs_over_n[i])
-	ax.plot(num_bidders, benchmark)
-	plt.legend(legend, loc='lower right')
-	title = '(paper) avg auction revenue over n bidders'
-	plt.xlabel('num bidders') 
-	plt.ylabel('avg rev') 
-	plt.title(title) 
+	for j in range(len(all_avg_revs_over_n)):
+
+		# calculate benchmark
+		benchmark = []
+		for i in range(len(num_bidders)):
+			benchmark.append(sqrt(num_bidders[i]) * item_numbers[j])
+		bench_name = str(j+2) + '* sqrt(n)'
+		legend = ['simulation', bench_name]
+		title = str(j+2) + ' items'
+
+		row_num = int(j / subplot_cols)
+		col_num = int(j % subplot_cols)
+
+		print(row_num, col_num)
+
+		axes[row_num, col_num].plot(num_bidders,all_avg_revs_over_n[j])
+		axes[row_num, col_num].plot(num_bidders,benchmark)
+		axes[row_num, col_num].legend(legend, loc='best')
+		axes[row_num, col_num].set_title(title) 
+
+		if row_num == subplot_rows - 1:
+			axes[row_num, col_num].set(xlabel='num bidders', ylabel='avg rev')
+		else:
+			axes[row_num, col_num].set(ylabel='avg rev')
+
+	# legend = []
+	# for i in range(2, max_items+1):
+	# 	legend.append(str(i) + ' items')
+	# legend.append('benchmark')
+
+	# fig, ax = plt.subplots()
+	# for i in range(len(all_avg_revs_over_n)):
+	# 	ax.plot(num_bidders,all_avg_revs_over_n[i])
+	# ax.plot(num_bidders, benchmark)
+	# plt.legend(legend, loc='lower right')
+	# title = '(paper) avg auction revenue over n bidders'
+	# plt.xlabel('num bidders') 
+	# plt.ylabel('avg rev') 
+	# plt.title(title) 
 	plt.show()
 
 
