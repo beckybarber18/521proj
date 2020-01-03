@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
 #-----------------------------------------------------------------------
-# paper_auction.py
+# even_odd.py
 # Author: Rebecca Barber
 # 
 # takes as input num_trials, max_bidders, num_items
+# THIS AUCTION is just like the auction described in the paper, with the
+# following modification:
+# instead give medium bidders either the even or odd items, 
+# uniformly at random (and the other set to the next medium bidder). 
 #-----------------------------------------------------------------------
 
 import scipy.stats as st
@@ -44,21 +48,25 @@ def auction_rev(n, m):
 		bidder_vals.append(draw_vals(m))
 
 	# who is medium?
-	# if you value the grand bundle at least m * q
+	# if sum of values is > mq 
+	# (i think this is still the case?)
 	q = sqrt(n)
 	thresh = m * q
-	# medium_flag = []
 	num_med = 0
 	for i in range(len(bidder_vals)):
 		val_grand_bundle = sum(bidder_vals[i])
 		if val_grand_bundle >= thresh: 
-			# medium_flag.append(True)
 			num_med += 1
-		# else:
-		# 	medium_flag.append(False)
 
-	# we get revenue min(num_med, m) * q
-	this_rev = min(num_med, m) * q
+	this_rev = 0
+    # if there are >= 2 medium bidders, we get revenue m * q
+	if num_med >= 2: this_rev = m * q
+    # if there is 1 medium bidder, let's say that we give them the
+    # even items w.p. 1/2 and odd items w.p. 1/2, so get revenue 
+    # m/2 * q
+	elif num_med == 1:  this_rev = m/2 * q
+    # if there are no medium bidders, we get revenue 0
+	else: this_rev = 0
 	return this_rev, num_med
 
 
@@ -68,11 +76,14 @@ def main(argv):
 	# num_trials = int(argv[1])
 	max_bidders = 30
 	# max_bidders = int(argv[2])
-	max_items = 7
+	max_items = 10
 	min_items = 2
 	# max_items = int(argv[3])
-	subplot_rows = 2
-	subplot_cols = 2
+	subplot_rows = 3
+	subplot_cols = 3
+
+	figure_name = './figures/evenodd' + str(max_bidders) + 'bidders_' + \
+			str(max_items) + 'items_' + str(num_trials) + 'trials.png'
 
 	num_bidders = []
 	for i in range(2, max_bidders+1):
@@ -89,7 +100,7 @@ def main(argv):
 
 		print('\nnumber of items:', num_items)
 
-		csv_file = './auction_results/' + str(max_bidders) + 'bidders_' + \
+		csv_file = './auction_results/evenodd' + str(max_bidders) + 'bidders_' + \
 			str(num_items) + 'items_' + str(num_trials) + 'trials.csv'
 
 		# stores avg rev for n bidder (where n in [2, max_bidders])
@@ -157,20 +168,7 @@ def main(argv):
 		else:
 			axes[row_num, col_num].set(ylabel='avg rev')
 
-	# legend = []
-	# for i in range(2, max_items+1):
-	# 	legend.append(str(i) + ' items')
-	# legend.append('benchmark')
-
-	# fig, ax = plt.subplots()
-	# for i in range(len(all_avg_revs_over_n)):
-	# 	ax.plot(num_bidders,all_avg_revs_over_n[i])
-	# ax.plot(num_bidders, benchmark)
-	# plt.legend(legend, loc='lower right')
-	# title = '(paper) avg auction revenue over n bidders'
-	# plt.xlabel('num bidders') 
-	# plt.ylabel('avg rev') 
-	# plt.title(title) 
+	plt.savefig(figure_name)
 	plt.show()
 
 
