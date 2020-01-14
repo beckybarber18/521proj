@@ -38,7 +38,7 @@ def main(argv):
 
 	ggsave(filename=figure_name,
        plot=plt1,
-       device='png', dpi = 200)
+       device='png', dpi = 300, height = 5, width = 9)
 
 
 if __name__ == '__main__':
