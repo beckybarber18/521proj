@@ -18,6 +18,7 @@ from sys import argv
 import numpy as np
 from math import *
 import pandas as pd
+from plotnine import *
 
 # private class to define the ER curve
 class er_dist(st.rv_continuous):
@@ -72,17 +73,17 @@ def auction_rev(n, m):
 
 def main(argv):
 
-	num_trials = 20
+	num_trials = 100
 	# num_trials = int(argv[1])
-	max_bidders = 30
+	max_bidders = 80
 	# max_bidders = int(argv[2])
-	max_items = 10
+	max_items = 7
 	min_items = 2
 	# max_items = int(argv[3])
-	subplot_rows = 3
-	subplot_cols = 3
+	# subplot_rows = 3
+	# subplot_cols = 3
 
-	figure_name = './figures/evenodd' + str(max_bidders) + 'bidders_' + \
+	figure_name = './figures/evenodd_' + str(max_bidders) + 'bidders_' + \
 			str(max_items) + 'items_' + str(num_trials) + 'trials.png'
 
 	num_bidders = []
@@ -141,35 +142,67 @@ def main(argv):
 		all_avg_revs_over_n.append(avg_revs_over_n)
 
 	# graph avg revs
-	fig, axes = plt.subplots(nrows=subplot_rows,ncols=subplot_cols, sharex=True)
+	# make dataframe for plotting
+	rev_df = pd.DataFrame(columns=['num items', 'num bidders', 'avg rev', 'Legend'])
+	for i in range(len(all_avg_revs_over_n)):
+		these_revs = all_avg_revs_over_n[i]
+		m = i + min_items
+		for j in range(len(these_revs)):
+			n = j + 2
+			rev = these_revs[j]
+			benchmark = m * sqrt(n)
+			item_str = str(int(m)) + ' items'
+			rev_df = rev_df.append({'num items': item_str, 'num bidders': n, 'avg rev': rev, 'Legend': 'Simulation'}, 
+				ignore_index=True)
+			rev_df = rev_df.append({'num items': item_str, 'num bidders': n, 'avg rev': benchmark, 'Legend': 'Benchmark'}, 
+				ignore_index=True)
 
-	for j in range(len(all_avg_revs_over_n)):
+	x_labels = []
+	for i in range(max_bidders + 1):
+		if i % 20 == 0: x_labels.append(i)
+		else: x_labels.append('')
 
-		# calculate benchmark
-		benchmark = []
-		for i in range(len(num_bidders)):
-			benchmark.append(sqrt(num_bidders[i]) * item_numbers[j])
-		bench_name = str(j+min_items) + '* sqrt(n)'
-		legend = ['simulation', bench_name]
-		title = str(j+min_items) + ' items'
+	plt1 = ggplot(aes(x='num bidders', y = 'avg rev', color = 'Legend', group = 'Legend'), data=rev_df) + \
+		geom_line() +\
+	    facet_wrap(['num items']) + \
+		theme(axis_text_x = element_text(color = 'black'), axis_text_y = element_text(color = 'black')) + \
+		labs(x="Number of Bidders", y="Average Revenue", title = "Even-Odd Revenue") + \
+		scale_x_discrete(labels = x_labels)
 
-		row_num = int(j / subplot_cols)
-		col_num = int(j % subplot_cols)
+	ggsave(filename=figure_name,
+       plot=plt1,
+       device='png', dpi = 200)
 
-		print(row_num, col_num)
 
-		axes[row_num, col_num].plot(num_bidders,all_avg_revs_over_n[j])
-		axes[row_num, col_num].plot(num_bidders,benchmark)
-		axes[row_num, col_num].legend(legend, loc='best')
-		axes[row_num, col_num].set_title(title) 
+	# fig, axes = plt.subplots(nrows=subplot_rows,ncols=subplot_cols, sharex=True)
 
-		if row_num == subplot_rows - 1:
-			axes[row_num, col_num].set(xlabel='num bidders', ylabel='avg rev')
-		else:
-			axes[row_num, col_num].set(ylabel='avg rev')
+	# for j in range(len(all_avg_revs_over_n)):
 
-	plt.savefig(figure_name)
-	plt.show()
+	# 	# calculate benchmark
+	# 	benchmark = []
+	# 	for i in range(len(num_bidders)):
+	# 		benchmark.append(sqrt(num_bidders[i]) * item_numbers[j])
+	# 	bench_name = str(j+min_items) + '* sqrt(n)'
+	# 	legend = ['simulation', bench_name]
+	# 	title = str(j+min_items) + ' items'
+
+	# 	row_num = int(j / subplot_cols)
+	# 	col_num = int(j % subplot_cols)
+
+	# 	print(row_num, col_num)
+
+	# 	axes[row_num, col_num].plot(num_bidders,all_avg_revs_over_n[j])
+	# 	axes[row_num, col_num].plot(num_bidders,benchmark)
+	# 	axes[row_num, col_num].legend(legend, loc='best')
+	# 	axes[row_num, col_num].set_title(title) 
+
+	# 	if row_num == subplot_rows - 1:
+	# 		axes[row_num, col_num].set(xlabel='num bidders', ylabel='avg rev')
+	# 	else:
+	# 		axes[row_num, col_num].set(ylabel='avg rev')
+
+	# plt.savefig(figure_name)
+	# plt.show()
 
 
 if __name__ == '__main__':
